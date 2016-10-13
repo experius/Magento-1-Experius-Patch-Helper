@@ -169,7 +169,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
 	
 	public function getRewrites()
     {
-        $config = Mage::getModel('toolbox/mage_core_config')->init();
+        $config = Mage::getModel('core/config')->init();
 		
         $mergeModel = clone $config;
         

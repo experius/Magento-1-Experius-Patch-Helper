@@ -1,14 +1,25 @@
 <?php
 
-require_once 'abstract.php';
+$baseDir = '/'.trim(realpath(dirname(__FILE__) . '/../../..'), '/'); 
+if (file_exists('abstract.php')) {
+    require_once 'abstract.php';
+} elseif (file_exists('shell/abstract.php')) {
+	require_once 'shell/abstract.php';
+} elseif (file_exists($baseDir . '/shell/abstract.php')){
+    require_once $baseDir . '/shell/abstract.php';
+} else {
+	exit("Abstract file not found.");
+}
 
 class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
     
     private $appCodeLocalPath = false;
+	
+	private $rewrites = array();
     
-    private $rewrites = false;
+    private $rewritesArray = array();
     
-    private $rewritesFlat = false;
+    private $rewritesFlat = array();
     
     public function run(){
         
@@ -23,8 +34,6 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
                    
                    foreach($lines as $line){
                         if(preg_match("/\+{3} (.*)/",$line, $matches)){
-                            echo $matches[1] . "\n";
-                            
                             $patchedFiles[$matches[1]] = $matches[1];
                         }
                    }
@@ -91,7 +100,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         
         $className = $this->getClassNameFromFile($filename);
         
-        $rewrites = $this->getRewrites();
+        $rewrites = $this->getRewritesFlat();
         
         if(isset($rewrites[$className])){
             foreach($rewrites[$className] as $rewriteClass){
@@ -103,13 +112,12 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
     
     protected function getRewritesArray(){
         if(!$this->rewrites){
-            $config = Mage::getModel('toolbox/mage_core_config')->init();
-            $this->rewrites = $config->getRewrites();
+            $this->rewrites = $this->getRewrites();
         }
         return $this->rewrites;
     }
     
-    protected function getRewrites(){
+    protected function getRewritesFlat(){
 
         if(!$this->rewritesFlat){
             
@@ -157,6 +165,60 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
 
         return $this->rewritesFlat;
     }
+	
+	
+	public function getRewrites()
+    {
+        $config = Mage::getModel('toolbox/mage_core_config')->init();
+		
+        $mergeModel = clone $config;
+        
+        $rewritesArray = array();
+        
+        $modules = $config->getNode('modules')->children();
+        foreach ($modules as $modName=>$module) {
+            if ($module->is('active')) {
+                $configFile = $config->getModuleDir('etc', $modName).DS.'config.xml';
+                if ($mergeModel->loadFile($configFile)) {
+                    
+                    $rewrites = $mergeModel->getNode('global/models');
+                    if ($rewrites) {
+                        $this->_populateRewriteArray($rewrites, $modName, 'models');
+                    }
+                    
+                    $rewrites = $mergeModel->getNode('global/blocks');
+                    if ($rewrites) {
+                        $this->_populateRewriteArray($rewrites, $modName, 'blocks');
+                    }
+                    
+                    $rewrites = $mergeModel->getNode('global/helpers');
+                    if ($rewrites) {
+                        $this->_populateRewriteArray($rewrites, $modName, 'helpers');
+                    }
+                }
+            }
+        }
+        
+        return $this->rewrites;
+    }
+
+    protected function _populateRewriteArray(Mage_Core_Model_Config_Element $rewrites, $modName, $type)
+    {
+        $rewrites = $rewrites->asArray();
+        foreach ($rewrites as $module => $nodes) {
+            if (isset($nodes['rewrite'])) {
+                foreach ($nodes['rewrite'] as $classSuffix => $rewrite) {
+                    $rewriteInfo = array(
+                        'module_name' => $modName,
+                        'rewrite_class' => $rewrite
+                    );
+                    $this->rewrites[$type][$module.'_'.$classSuffix][] = $rewriteInfo;
+                }
+            }
+        }
+    }
+	
+	
     
 }
 

@@ -66,13 +66,6 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         
     }
     
-    protected function getAppCodeLocalFolderPath(){
-        if(!$this->appCodeLocalPath){
-            $this->appCodeLocalPath = Mage::getBaseDir('app');
-        }
-        return $this->appCodeLocalPath;
-    }
-    
     protected function checkLocalOverwrite($filename){
             
         $localOverwriteFilename = Mage::getBaseDir('app') . str_replace('app/code/core/Mage','/code/local/Mage',$filename);
@@ -80,8 +73,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         if(file_exists($localOverwriteFilename)){
             echo $localOverwriteFilename . "\n";
         }
-        
-        $this->getAppCodeLocalFolderPath();
+
     }
     
     protected function getClassNameFromFile($filename){
@@ -95,16 +87,31 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         return $className;
 
     }
+	
+	protected function getFileNameFromClass($className){
+
+        $fileName  = str_replace('_','/',$className) . '.php';
+
+		if(file_exists(Mage::getBaseDir('app') . '/code/local/' . $fileName)){
+			return Mage::getBaseDir('app') . '/code/local/' . $fileName;
+		} elseif(file_exists(Mage::getBaseDir('app') . '/code/community/' . $fileName)){
+			return Mage::getBaseDir('app') . '/code/community/' . $fileName;
+		}
+		
+        return $fileName;
+
+    }
     
     protected function checkRewrites($filename){
         
         $className = $this->getClassNameFromFile($filename);
+
         
         $rewrites = $this->getRewritesFlat();
         
         if(isset($rewrites[$className])){
             foreach($rewrites[$className] as $rewriteClass){
-                echo $rewriteClass['module_name'] . ' -> ' . $rewriteClass['rewrite_class'] .  " -> " . $filename . "\n";
+                echo $rewriteClass['module_name'] . ' -> ' . $rewriteClass['rewrite_class'] .  " -> " . $filename . " VS " . $this->getFileNameFromClass($rewriteClass['rewrite_class']) . " \n";
             }
         }
         

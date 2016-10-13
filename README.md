@@ -4,6 +4,6 @@ php shell/patchHelper.php --patch PATCH_SUPEE-8788_CE_1.9.0.1_v1-2016-10-11-06-5
 
 PATCH FILE NEEDS TO BE IN THE MAGENTO ROOT
 
-Return conflicting local overwrites and rewrites wich maybe need to be manually patched.
+Return conflicting local overwrites and rewrites which maybe need to be manually patched.
 
 For now it only checks php files from the app/code/core/Mage

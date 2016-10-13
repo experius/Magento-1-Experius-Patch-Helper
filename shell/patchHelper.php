@@ -104,7 +104,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         
         if(isset($rewrites[$className])){
             foreach($rewrites[$className] as $rewriteClass){
-                echo $rewriteClass['module_name'] . ' -> ' . $rewriteClass['rewrite_class'] . "\n";
+                echo $rewriteClass['module_name'] . ' -> ' . $rewriteClass['rewrite_class'] .  " -> " . $filename . "\n";
             }
         }
         

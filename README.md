@@ -6,4 +6,4 @@ PATCH FILE NEEDS TO BE IN THE MAGENTO ROOT
 
 Return conflicting local overwrites and rewrites which maybe need to be manually patched.
 
-Added frontend .phtml check based on change /base/ template files by patch
+Added frontend .phtml check based on changed app/design/frontend/base/default/template/ template files by patch

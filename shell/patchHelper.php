@@ -43,6 +43,8 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
                 return;
             }
             
+            $patchedFiles['app/design/frontend/base/default/template/catalog/product/view.phtml'] = 'app/design/frontend/base/default/template/catalog/product/view.phtml';
+            
             echo "\n\n";
             echo "Check Local Overwrites \n";
             foreach($patchedFiles as $patchedFile){
@@ -56,6 +58,14 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
             foreach($patchedFiles as $patchedFile){
                 if(preg_match('/.php/',$patchedFile) && preg_match('/app\/code\/core\/Mage/',$patchedFile)){
                     $this->checkRewrites($patchedFile);
+                }
+            }
+            echo "\n\n";
+                
+            echo "Check Frontend Template Files \n";
+            foreach($patchedFiles as $patchedFile){
+                if(preg_match('/.phtml/',$patchedFile) && preg_match('/app\/design\/frontend\/base\/default/',$patchedFile)){
+                    $this->checkTemplateFiles($patchedFile);
                 }
             }
             echo "\n\n";
@@ -225,7 +235,30 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         }
     }
 	
-	
+	protected function checkTemplateFiles($filename){
+        $designFolder = Mage::getBaseDir('app') . '/design/frontend';
+        
+        $templates = scandir($designFolder);
+        
+        foreach ($templates as $key => $subfolder ) {
+            if ( !in_array( $subfolder, array( '.', '..', 'base' ) ) ) {
+                $designs = scandir($designFolder . '/' . $subfolder);
+                foreach($designs as $design){
+                    if ( !in_array($design, array( '.', '..' ) ) ) {
+                        $templatePath = $designFolder . '/' . $subfolder . '/' . $design;
+                        
+                        $fileToCheck = $templatePath . '/' . str_replace('app/design/frontend/base/default/','',$filename);
+
+                        if(file_exists($fileToCheck)){
+                             echo $fileToCheck . "\n";
+                        }
+
+                    }
+                }
+            }
+        }
+        
+    }
     
 }
 

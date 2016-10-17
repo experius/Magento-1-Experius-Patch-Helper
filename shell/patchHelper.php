@@ -43,8 +43,6 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
                 return;
             }
             
-            $patchedFiles['app/design/frontend/base/default/template/catalog/product/view.phtml'] = 'app/design/frontend/base/default/template/catalog/product/view.phtml';
-            
             echo "\n\n";
             echo "Check Local Overwrites \n";
             foreach($patchedFiles as $patchedFile){

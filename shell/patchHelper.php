@@ -1,5 +1,4 @@
 <?php
-
 $baseDir = '/'.trim(realpath(dirname(__FILE__) . '/../../..'), '/'); 
 if (file_exists('abstract.php')) {
     require_once 'abstract.php';
@@ -10,7 +9,6 @@ if (file_exists('abstract.php')) {
 } else {
 	exit("Abstract file not found.");
 }
-
 class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
     
     private $appCodeLocalPath = false;
@@ -24,7 +22,6 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
     public function run(){
         
         if($this->getArg('patch')){
-
             $patchFilePath = Mage::getBaseDir() . DS . $this->getArg('patch');
         
             if(file_exists($patchFilePath)){
@@ -63,9 +60,9 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
             echo "Check Frontend Template Files \n";
             foreach($patchedFiles as $patchedFile){
                 if(preg_match('/.phtml/',$patchedFile) && preg_match('/app\/design\/frontend\/base\/default/',$patchedFile)){
-                    $this->checkTemplateFiles($patchedFile);
                 }
             }
+            $this->checkTemplateFiles($patchedFiles);
             echo "\n\n";
             
 		} else {
@@ -77,15 +74,12 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
     protected function checkLocalOverwrite($filename){
             
         $localOverwriteFilename = Mage::getBaseDir('app') . str_replace('app/code/core/Mage','/code/local/Mage',$filename);
-
         if(file_exists($localOverwriteFilename)){
             echo $localOverwriteFilename . "\n";
         }
-
     }
     
     protected function getClassNameFromFile($filename){
-
         $className  = str_replace('/','_',str_replace(array('app/code/core/','.php'),'',$filename));
         
         if(preg_match('/_controllers_/',$className)){
@@ -93,13 +87,10 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         }
         
         return $className;
-
     }
 	
 	protected function getFileNameFromClass($className){
-
         $fileName  = str_replace('_','/',$className) . '.php';
-
 		if(file_exists(Mage::getBaseDir('app') . '/code/local/' . $fileName)){
 			return Mage::getBaseDir('app') . '/code/local/' . $fileName;
 		} elseif(file_exists(Mage::getBaseDir('app') . '/code/community/' . $fileName)){
@@ -107,13 +98,11 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
 		}
 		
         return $fileName;
-
     }
     
     protected function checkRewrites($filename){
         
         $className = $this->getClassNameFromFile($filename);
-
         
         $rewrites = $this->getRewritesFlat();
         
@@ -133,7 +122,6 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
     }
     
     protected function getRewritesFlat(){
-
         if(!$this->rewritesFlat){
             
             $rewrites = $this->getRewritesArray();
@@ -177,7 +165,6 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         
             $this->rewritesFlat = $rewritesFlatList;    
         }
-
         return $this->rewritesFlat;
     }
 	
@@ -216,7 +203,6 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         
         return $this->rewrites;
     }
-
     protected function _populateRewriteArray(Mage_Core_Model_Config_Element $rewrites, $modName, $type)
     {
         $rewrites = $rewrites->asArray();
@@ -233,7 +219,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         }
     }
 	
-	protected function checkTemplateFiles($filename){
+	protected function checkTemplateFiles($filenames){
         $designFolder = Mage::getBaseDir('app') . '/design/frontend';
         
         $templates = scandir($designFolder);
@@ -244,13 +230,20 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
                 foreach($designs as $design){
                     if ( !in_array($design, array( '.', '..' ) ) ) {
                         $templatePath = $designFolder . '/' . $subfolder . '/' . $design;
-                        
-                        $fileToCheck = $templatePath . '/' . str_replace('app/design/frontend/base/default/','',$filename);
 
-                        if(file_exists($fileToCheck)){
-                             echo $fileToCheck . "\n";
+                        foreach($filenames as $patchedFile){
+                            $fileToCheck = $templatePath . '/' . str_replace('app/design/frontend/base/default/','',$patchedFile);
+                            //var_dump($fileToCheck);
+                            //if(preg_match('/.phtml/',$patchedFile) && preg_match('/app\/design\/frontend\/base\/default/',$patchedFile)){
+                                if(file_exists($fileToCheck)){
+                                    echo $fileToCheck . "\n";
+                                }
+                            //}
                         }
-
+//                        $fileToCheck = $templatePath . '/' . str_replace('app/design/frontend/base/default/','',$filename);
+//                        if(file_exists($fileToCheck)){
+//                             echo $fileToCheck . "\n";
+//                        }
                     }
                 }
             }
@@ -259,6 +252,5 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
     }
     
 }
-
 $shell = new Mage_Shell_PatchHelper();
 $shell->run();    

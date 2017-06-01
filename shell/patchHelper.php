@@ -250,7 +250,20 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         }
         
     }
-    
+
+    public function usageHelp()
+    {
+        return <<<USAGE
+Usage:  php shell/patchHelper.php -- [options]
+
+  --patch <patch_file>       Patch File (example: PATCH_SUPEE-8788_CE_1.9.0.1_v1-2016-10-11-06-57-03.sh)
+
+  -h            Short alias for help
+  help          This help
+
+USAGE;
+    }
+
 }
 $shell = new Mage_Shell_PatchHelper();
 $shell->run();    

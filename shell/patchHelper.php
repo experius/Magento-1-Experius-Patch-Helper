@@ -11,11 +11,7 @@ if (file_exists('abstract.php')) {
 }
 class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
     
-    private $appCodeLocalPath = false;
-	
 	private $rewrites = array();
-    
-    private $rewritesArray = array();
     
     private $rewritesFlat = array();
     
@@ -41,7 +37,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
             }
             
             echo "\n\n";
-            echo "Check Local Overwrites \n";
+            echo "\e[41m Check Local Overwrites \e[0m\n";
             foreach($patchedFiles as $patchedFile){
                 if(preg_match('/app\/code\/core\/Mage/',$patchedFile)){
                     $this->checkLocalOverwrite($patchedFile);
@@ -49,7 +45,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
             }
     
             echo "\n\n";    
-            echo "Check Rewrites \n";
+            echo "\e[41m Check Rewrites \033[0m\n";
             foreach($patchedFiles as $patchedFile){
                 if(preg_match('/.php/',$patchedFile) && preg_match('/app\/code\/core\/Mage/',$patchedFile)){
                     $this->checkRewrites($patchedFile);
@@ -57,14 +53,17 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
             }
             echo "\n\n";
                 
-            echo "Check Frontend Template Files \n";
-            foreach($patchedFiles as $patchedFile){
-                if(preg_match('/.phtml/',$patchedFile) && preg_match('/app\/design\/frontend\/base\/default/',$patchedFile)){
-                }
-            }
+            echo "\e[41m Check Frontend Template Files \e[0m\n";
             $this->checkTemplateFiles($patchedFiles);
             echo "\n\n";
-            
+
+            echo "\e[43m Check similar name phtml files in other folders \e[0m\n";
+            foreach($patchedFiles as $patchedFile){
+                if(preg_match('/.phtml/',$patchedFile) && preg_match('/app\/design\/frontend\/base\/default/',$patchedFile)){
+                    $this->searchTemplateNames($patchedFile);
+                }
+            }
+
 		} else {
             echo "Add Patch Filename. php patchHelper.php --patch PATCH_SUPEE-8788_CE_1.9.0.1_v1-2016-10-11-06-57-03.sh \n";
         }
@@ -232,23 +231,29 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
                         $templatePath = $designFolder . '/' . $subfolder . '/' . $design;
 
                         foreach($filenames as $patchedFile){
+
                             $fileToCheck = $templatePath . '/' . str_replace('app/design/frontend/base/default/','',$patchedFile);
-                            //var_dump($fileToCheck);
-                            //if(preg_match('/.phtml/',$patchedFile) && preg_match('/app\/design\/frontend\/base\/default/',$patchedFile)){
-                                if(file_exists($fileToCheck)){
-                                    echo $fileToCheck . "\n";
-                                }
-                            //}
+
+                            if(file_exists($fileToCheck)){
+                                echo $fileToCheck . "\n";
+                            }
+
                         }
-//                        $fileToCheck = $templatePath . '/' . str_replace('app/design/frontend/base/default/','',$filename);
-//                        if(file_exists($fileToCheck)){
-//                             echo $fileToCheck . "\n";
-//                        }
+
                     }
                 }
             }
         }
         
+    }
+
+    protected function searchTemplateNames($fileName){
+        $fileNameParts = explode('/',$fileName);
+        $fileName  = end($fileNameParts);
+        array_pop($fileNameParts);
+        $path = implode('/',$fileNameParts);
+        $relativePathToTemplate = str_replace('app/design/frontend/base/default/template/','',$path);
+        echo shell_exec('find app/design/frontend -type f -name ' . $fileName . ' -not -path "app/design/frontend/base/*" -not -path "'.$path.'/*"  -not -path "*/'.$relativePathToTemplate.'/*"');
     }
 
     public function usageHelp()

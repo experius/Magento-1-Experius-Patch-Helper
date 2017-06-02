@@ -253,7 +253,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         array_pop($fileNameParts);
         $path = implode('/',$fileNameParts);
         $relativePathToTemplate = str_replace('app/design/frontend/base/default/template/','',$path);
-        echo shell_exec('find app/design/frontend -type f -name ' . $fileName . ' -not -path "app/design/frontend/base/*" -not -path "'.$path.'/*"  -not -path "*/'.$relativePathToTemplate.'/*"');
+        echo shell_exec('find app/design/frontend -type f -name ' . $fileName . ' -not -path "app/design/frontend/base/*"  -not -path "app/design/frontend/rwd/default/*" -not -path "'.$path.'/*"  -not -path "*/'.$relativePathToTemplate.'/*"');
     }
 
     public function usageHelp()

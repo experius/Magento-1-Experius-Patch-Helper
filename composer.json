@@ -1,0 +1,16 @@
+{
+  "name": "experius/magento1-patch-helper",
+  "type": "magento-module",
+  "description": "Helps you to find files in custom themes, custom modules or local overwrites that also might need to be patched manually",
+  "homepage": "https://github.com/experius/Magento-1-Experius-Patch-Helper",
+  "authors": [
+    {
+      "name": "Derrick Heesbeen",
+      "role": "Author/Maintainer"
+    }
+  ],
+  "require": {
+    "php": ">=5.3",
+    "magento-hackathon/magento-composer-installer": "*"
+  }
+}

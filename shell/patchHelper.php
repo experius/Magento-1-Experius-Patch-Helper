@@ -57,10 +57,22 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
             $this->checkTemplateFiles($patchedFiles);
             echo "\n\n";
 
+            echo "\e[41m Check Skin Files \e[0m\n";
+            $this->checkSkinFiles($patchedFiles);
+            echo "\n\n";
+
             echo "\e[43m Check similar name phtml files in other folders \e[0m\n";
             foreach($patchedFiles as $patchedFile){
                 if(preg_match('/.phtml/',$patchedFile) && preg_match('/app\/design\/frontend\/base\/default/',$patchedFile)){
                     $this->searchTemplateNames($patchedFile);
+                }
+            }
+
+            echo "\n\n";
+            echo "\e[43m Check similar name skin js files in other folders \e[0m\n";
+            foreach($patchedFiles as $patchedFile){
+                if(preg_match('/.js/',$patchedFile) && preg_match('/skin\/frontend\/base\/default/',$patchedFile)){
+                    $this->searchSkinNames($patchedFile);
                 }
             }
 
@@ -247,6 +259,35 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         
     }
 
+    protected function checkSkinFiles($filenames){
+        $designFolder = Mage::getBaseDir('skin') . '/frontend';
+
+        $templates = scandir($designFolder);
+
+        foreach ($templates as $key => $subfolder ) {
+            if ( !in_array( $subfolder, array( '.', '..', 'base' ) ) ) {
+                $designs = scandir($designFolder . '/' . $subfolder);
+                foreach($designs as $design){
+                    if ( !in_array($design, array( '.', '..' ) ) ) {
+                        $templatePath = $designFolder . '/' . $subfolder . '/' . $design;
+
+                        foreach($filenames as $patchedFile){
+
+                            $fileToCheck = $templatePath . '/' . str_replace('skin/frontend/base/default/','',$patchedFile);
+
+                            if(file_exists($fileToCheck)){
+                                echo $fileToCheck . "\n";
+                            }
+
+                        }
+
+                    }
+                }
+            }
+        }
+
+    }
+
     protected function searchTemplateNames($fileName){
         $fileNameParts = explode('/',$fileName);
         $fileName  = end($fileNameParts);
@@ -254,6 +295,15 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         $path = implode('/',$fileNameParts);
         $relativePathToTemplate = str_replace('app/design/frontend/base/default/template/','',$path);
         echo shell_exec('find app/design/frontend -type f -name ' . $fileName . ' -not -path "app/design/frontend/base/*"  -not -path "app/design/frontend/rwd/default/*" -not -path "'.$path.'/*"  -not -path "*/'.$relativePathToTemplate.'/*"');
+    }
+
+    protected function searchSkinNames($fileName){
+        $fileNameParts = explode('/',$fileName);
+        $fileName  = end($fileNameParts);
+        array_pop($fileNameParts);
+        $path = implode('/',$fileNameParts);
+        $relativePathToTemplate = str_replace('skin/frontend/base/default/','',$path);
+        echo shell_exec('find skin/frontend -type f -name ' . $fileName . ' -not -path "skin/frontend/base/*"  -not -path "skin/frontend/rwd/default/*" -not -path "'.$path.'/*"  -not -path "*/'.$relativePathToTemplate.'/*"');
     }
 
     public function usageHelp()

@@ -23,19 +23,35 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
             if(file_exists($patchFilePath)){
                 $fp = @fopen($patchFilePath, 'r'); 
                 if ($fp) {
-                   $lines = explode("\n", fread($fp, filesize($patchFilePath)));
+                    $contents = fread($fp, filesize($patchFilePath));
+                    $lines = explode("\n", $contents);
                    
-                   foreach($lines as $line){
+                    foreach($lines as $line){
                         if(preg_match("/\+{3} (.*)/",$line, $matches)){
-                            $patchedFiles[$matches[1]] = $matches[1];
+                            $patchedFiles[$matches[1]] = '';
+                            $marker = intval( strpos($contents, $matches[1]) + strlen($matches[1]) );
+
+                            if ($marker > 0) {
+                                $end = strpos($contents, 'diff --git', $marker);
+
+                                if ($end > 0) {
+                                    $patchedFiles[$matches[1]] = implode("\n",
+                                        array("\e[41m Patch Contents \e[0m") +
+                                        array_slice(
+                                            explode("\n", ( substr($contents, $marker, ( $end - $marker) ) ) ),
+                                            4
+                                        )
+                                    );
+                                }
+                            }
                         }
-                   }
+                    }
                 }
             } else {
                 echo "Patch file not found \n";
                 return;
             }
-            
+
             echo "\n\n";
             echo "\e[41m Check Local Overwrites \e[0m\n";
             foreach($patchedFiles as $patchedFile){
@@ -46,7 +62,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
     
             echo "\n\n";    
             echo "\e[41m Check Rewrites \033[0m\n";
-            foreach($patchedFiles as $patchedFile){
+            foreach($patchedFiles as $patchedFile => $data){
                 if(preg_match('/.php/',$patchedFile) && preg_match('/app\/code\/core\/Mage/',$patchedFile)){
                     $this->checkRewrites($patchedFile);
                 }
@@ -62,7 +78,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
             echo "\n\n";
 
             echo "\e[43m Check similar name phtml files in other folders \e[0m\n";
-            foreach($patchedFiles as $patchedFile){
+            foreach($patchedFiles as $patchedFile => $data){
                 if(preg_match('/.phtml/',$patchedFile) && preg_match('/app\/design\/frontend\/base\/default/',$patchedFile)){
                     $this->searchTemplateNames($patchedFile);
                 }
@@ -70,7 +86,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
 
             echo "\n\n";
             echo "\e[43m Check similar name skin js files in other folders \e[0m\n";
-            foreach($patchedFiles as $patchedFile){
+            foreach($patchedFiles as $patchedFile => $data){
                 if(preg_match('/.js/',$patchedFile) && preg_match('/skin\/frontend\/base\/default/',$patchedFile)){
                     $this->searchSkinNames($patchedFile);
                 }
@@ -242,12 +258,13 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
                     if ( !in_array($design, array( '.', '..' ) ) ) {
                         $templatePath = $designFolder . '/' . $subfolder . '/' . $design;
 
-                        foreach($filenames as $patchedFile){
+                        foreach($filenames as $patchedFile => $data){
 
                             $fileToCheck = $templatePath . '/' . str_replace('app/design/frontend/base/default/','',$patchedFile);
 
                             if(file_exists($fileToCheck)){
-                                echo $fileToCheck . "\n";
+                                echo "\e[41m {$fileToCheck} \e[0m \n";
+                                echo "{$data}\n";
                             }
 
                         }
@@ -271,7 +288,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
                     if ( !in_array($design, array( '.', '..' ) ) ) {
                         $templatePath = $designFolder . '/' . $subfolder . '/' . $design;
 
-                        foreach($filenames as $patchedFile){
+                        foreach($filenames as $patchedFile => $data){
 
                             $fileToCheck = $templatePath . '/' . str_replace('skin/frontend/base/default/','',$patchedFile);
 

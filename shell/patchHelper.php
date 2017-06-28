@@ -54,17 +54,17 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
 
             echo "\n\n";
             echo "\e[41m Check Local Overwrites \e[0m\n";
-            foreach($patchedFiles as $patchedFile){
+            foreach($patchedFiles as $patchedFile => $context){
                 if(preg_match('/app\/code\/core\/Mage/',$patchedFile)){
-                    $this->checkLocalOverwrite($patchedFile);
+                    $this->checkLocalOverwrite($patchedFile, $context);
                 }
             }
     
             echo "\n\n";    
             echo "\e[41m Check Rewrites \033[0m\n";
-            foreach($patchedFiles as $patchedFile => $data){
+            foreach($patchedFiles as $patchedFile => $context){
                 if(preg_match('/.php/',$patchedFile) && preg_match('/app\/code\/core\/Mage/',$patchedFile)){
-                    $this->checkRewrites($patchedFile);
+                    $this->checkRewrites($patchedFile, $context);
                 }
             }
             echo "\n\n";
@@ -78,17 +78,17 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
             echo "\n\n";
 
             echo "\e[43m Check similar name phtml files in other folders \e[0m\n";
-            foreach($patchedFiles as $patchedFile => $data){
+            foreach($patchedFiles as $patchedFile => $context){
                 if(preg_match('/.phtml/',$patchedFile) && preg_match('/app\/design\/frontend\/base\/default/',$patchedFile)){
-                    $this->searchTemplateNames($patchedFile);
+                    $this->searchTemplateNames($patchedFile, $context);
                 }
             }
 
             echo "\n\n";
             echo "\e[43m Check similar name skin js files in other folders \e[0m\n";
-            foreach($patchedFiles as $patchedFile => $data){
+            foreach($patchedFiles as $patchedFile => $context){
                 if(preg_match('/.js/',$patchedFile) && preg_match('/skin\/frontend\/base\/default/',$patchedFile)){
-                    $this->searchSkinNames($patchedFile);
+                    $this->searchSkinNames($patchedFile, $context);
                 }
             }
 
@@ -97,12 +97,22 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         }
         
     }
+
+    private function _renderLine($message, $context)
+    {
+        if ( $this->getArg('verbose') !== false ) {
+            echo "\e[41m {$message} \e[0m \n";
+            echo "{$context}\n";
+        } else {
+            echo "$message\n";
+        }
+    }
     
-    protected function checkLocalOverwrite($filename){
+    protected function checkLocalOverwrite($filename, $context = ''){
             
         $localOverwriteFilename = Mage::getBaseDir('app') . str_replace('app/code/core/Mage','/code/local/Mage',$filename);
         if(file_exists($localOverwriteFilename)){
-            echo $localOverwriteFilename . "\n";
+            $this->_renderLine($localOverwriteFilename, $context);
         }
     }
     
@@ -127,7 +137,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         return $fileName;
     }
     
-    protected function checkRewrites($filename){
+    protected function checkRewrites($filename, $context = ''){
         
         $className = $this->getClassNameFromFile($filename);
         
@@ -135,7 +145,8 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         
         if(isset($rewrites[$className])){
             foreach($rewrites[$className] as $rewriteClass){
-                echo $rewriteClass['module_name'] . ' -> ' . $rewriteClass['rewrite_class'] .  " -> " . $filename . " VS " . $this->getFileNameFromClass($rewriteClass['rewrite_class']) . " \n";
+                $message = $rewriteClass['module_name'] . ' -> ' . $rewriteClass['rewrite_class'] .  " -> " . $filename . " VS " . $this->getFileNameFromClass($rewriteClass['rewrite_class']) . " \n";
+                $this->_renderLine($message, $context);
             }
         }
         
@@ -258,13 +269,12 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
                     if ( !in_array($design, array( '.', '..' ) ) ) {
                         $templatePath = $designFolder . '/' . $subfolder . '/' . $design;
 
-                        foreach($filenames as $patchedFile => $data){
+                        foreach($filenames as $patchedFile => $context){
 
                             $fileToCheck = $templatePath . '/' . str_replace('app/design/frontend/base/default/','',$patchedFile);
 
                             if(file_exists($fileToCheck)){
-                                echo "\e[41m {$fileToCheck} \e[0m \n";
-                                echo "{$data}\n";
+                                $this->_renderLine($fileToCheck, $context);
                             }
 
                         }
@@ -288,12 +298,12 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
                     if ( !in_array($design, array( '.', '..' ) ) ) {
                         $templatePath = $designFolder . '/' . $subfolder . '/' . $design;
 
-                        foreach($filenames as $patchedFile => $data){
+                        foreach($filenames as $patchedFile => $context){
 
                             $fileToCheck = $templatePath . '/' . str_replace('skin/frontend/base/default/','',$patchedFile);
 
                             if(file_exists($fileToCheck)){
-                                echo $fileToCheck . "\n";
+                                $this->_renderLine($fileToCheck, $context);
                             }
 
                         }
@@ -305,7 +315,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
 
     }
 
-    protected function searchTemplateNames($fileName){
+    protected function searchTemplateNames($fileName, $context = ''){
         $fileNameParts = explode('/',$fileName);
         $fileName  = end($fileNameParts);
         array_pop($fileNameParts);
@@ -314,7 +324,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         echo shell_exec('find app/design/frontend -type f -name ' . $fileName . ' -not -path "app/design/frontend/base/default/template/checkout/*" -not -path "app/design/frontend/base/default/template/persistent/*"  -not -path "app/design/frontend/rwd/default/*" -not -path "'.$path.'/*"  -not -path "*/'.$relativePathToTemplate.'/*"');
     }
 
-    protected function searchSkinNames($fileName){
+    protected function searchSkinNames($fileName, $context = ''){
         $fileNameParts = explode('/',$fileName);
         $fileName  = end($fileNameParts);
         array_pop($fileNameParts);
@@ -328,7 +338,8 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract{
         return <<<USAGE
 Usage:  php shell/patchHelper.php -- [options]
 
-  --patch <patch_file>       Patch File (example: PATCH_SUPEE-8788_CE_1.9.0.1_v1-2016-10-11-06-57-03.sh)
+  --patch   <patch_file>       Patch File (example: PATCH_SUPEE-8788_CE_1.9.0.1_v1-2016-10-11-06-57-03.sh)
+  --verbose <flag>             Optional flag to show patch context for each file
 
   -h            Short alias for help
   help          This help

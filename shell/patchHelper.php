@@ -390,4 +390,4 @@ USAGE;
 }
 
 $shell = new Mage_Shell_PatchHelper();
-$shell->run();    
+$shell->run();

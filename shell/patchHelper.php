@@ -26,6 +26,7 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract
                 $fp = @fopen($patchFilePath, 'r');
                 if ($fp) {
                     $contents = fread($fp, filesize($patchFilePath));
+		    $contents = $contents . 'diff --git';
                     $lines = explode("\n", $contents);
 
                     foreach ($lines as $line) {
@@ -59,7 +60,9 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract
             foreach ($patchedFiles as $patchedFile => $context) {
                 if (preg_match('/app\/code\/core\/Mage/', $patchedFile)) {
                     $this->checkLocalOverwrite($patchedFile, $context);
-                }
+                } elseif (preg_match('/lib/', $patchedFile)) {
+		    $this->checkLocalLibOverwrite($patchedFile, $context);
+		}
             }
 
             echo "\n\n";
@@ -119,6 +122,16 @@ class Mage_Shell_PatchHelper extends Mage_Shell_Abstract
         $localOverwriteFilename = Mage::getBaseDir('app') . str_replace('app/code/core/Mage', '/code/local/Mage', $filename);
         if (file_exists($localOverwriteFilename)) {
             $this->_renderLine($localOverwriteFilename, $context);
+	    return;
+        }
+    }
+
+    protected function checkLocalLibOverwrite($filename, $context = '')
+    {
+        $localOverwriteFilename = Mage::getBaseDir('app') . str_replace('lib/', '/code/local/', $filename);
+        if (file_exists($localOverwriteFilename)) {
+            $this->_renderLine($localOverwriteFilename, $context);
+            return;
         }
     }
 
